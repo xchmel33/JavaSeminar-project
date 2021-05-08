@@ -1,0 +1,15 @@
+.root{
+    -fx-background-color: #393e46;
+    -fx-font-size: 11px;
+}
+.button{
+    -fx-font-size: 16px;
+    -fx-color: #00adb5;
+    -fx-pref-width: 100px;
+    -fx-spacing: 50px;
+}
+.title{
+    -fx-font-size: 20px;
+    -fx-font-weight: bold;
+    -fx-padding: 10px;
+}

@@ -1,0 +1,47 @@
+<project>
+
+    <path id="class.path">
+        <fileset dir="lib">
+            <include name="**/*.jar"/>
+        </fileset>
+    </path>
+
+    <target name="run" depends="compile">
+        <java jar="dest/ija-app.jar" fork="true">
+            <modulepath path="lib\lib"/>
+            <jvmarg line="--module-path C:\Users\chmel\IdeaProjects\IJA-projekt\lib\lib --add-modules javafx.controls,javafx.base,javafx.fxml,javafx.graphics,javafx.media,javafx.web --add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED --add-exports javafx.base/com.sun.javafx.event=ALL-UNNAMED"/>
+        </java>
+    </target>
+
+    <target name="compile">
+        <mkdir dir="build"/>
+        <javac srcdir="src" destdir="build" includeantruntime="false">
+            <modulepath path="lib\lib"/>
+            <compilerarg line="--add-modules javafx.controls,javafx.base,javafx.fxml,javafx.graphics,javafx.media,javafx.web --add-opens=javafx.graphics/javafx.scene=ALL-UNNAMED --add-exports javafx.base/com.sun.javafx.event=ALL-UNNAMED"/>
+            <classpath refid="class.path"/>
+        </javac>
+
+        <mkdir dir="dest"/>
+        <jar destfile="dest/ija-app.jar" basedir="build">
+            <manifest>
+                <attribute name="Main-Class" value="sample.Main"/>
+            </manifest>
+            <zipgroupfileset dir="lib" includes="**/*.jar"/>
+            <fileset file="data/sample.fxml"/>
+        </jar>
+    </target>
+
+    <target name="clean">
+        <delete dir="build"/>
+        <delete dir="dest"/>
+        <mkdir dir="build"/>
+        <mkdir dir="dest"/>
+    </target>
+
+    <target name="all">
+        <antcall target="compile"/>
+        <antcall target="run"/>
+        <antcall target="clean"/>
+    </target>
+
+</project>
