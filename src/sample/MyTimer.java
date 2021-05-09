@@ -43,21 +43,33 @@ public class MyTimer {
 
         // Create speed multiplier HBox
         HBox speedBox = new HBox();
-        Slider speedSlider = new Slider(0.1,10,1);
         Button resetSlider = new Button("reset speed");
         Label speedInfo = new Label("1");
         Label speedInfoX = new Label("x");
-        speedFactor.bind(speedSlider.valueProperty());
+        Button addSpeed_01 = new Button("+0.1");
+        addSpeed_01.setOnAction(e -> speedFactor.set(speedFactor.doubleValue()+0.1));
+        Button addSpeed_05 = new Button("+0.5");
+        addSpeed_05.setOnAction(e -> speedFactor.set(speedFactor.doubleValue()+0.5));
+        Button addSpeed_10 = new Button("+1.0");
+        addSpeed_10.setOnAction(e -> speedFactor.set(speedFactor.doubleValue()+1.0));
+        Button subSpeed_01 = new Button("-0.1");
+        subSpeed_01.setOnAction(e -> speedFactor.set(speedFactor.doubleValue()-0.1));
+        Button subSpeed_05 = new Button("-0.5");
+        subSpeed_05.setOnAction(e -> speedFactor.set(speedFactor.doubleValue()-0.5));
+        Button subSpeed_10 = new Button("-1.0");
+        subSpeed_10.setOnAction(e -> speedFactor.set(speedFactor.doubleValue()-1.0));
         speedFactor.addListener(new ChangeListener<Number>() {
             @Override
             public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                speedSlider.valueProperty().set(round(speedFactor.doubleValue(),1));
-                Double a = speedFactor.doubleValue();
-                speedInfo.textProperty().set(a.toString());
+                speedFactor.set(round(speedFactor.doubleValue(),1));
+                if (speedFactor.doubleValue() <= 0){
+                    speedFactor.set(0.1);
+                }
+                speedInfo.textProperty().set(String.valueOf(speedFactor.doubleValue()));
             }
         });
-        resetSlider.setOnAction(e -> speedSlider.valueProperty().set(1));
-        speedBox.getChildren().addAll(speedSlider,speedInfo,speedInfoX);
+        resetSlider.setOnAction(e -> speedFactor.set(1));
+        speedBox.getChildren().addAll(subSpeed_01,subSpeed_05,subSpeed_10,addSpeed_01,addSpeed_05,addSpeed_10);
 
         // Create and configure the Button
         Button start = new Button("start");
@@ -84,7 +96,7 @@ public class MyTimer {
                                     @Override
                                     public void handle(ActionEvent t) {
                                         Duration duration = ((KeyFrame)t.getSource()).getTime();
-                                        time = time.add(duration.multiply(speedSlider.valueProperty().doubleValue()));
+                                        time = time.add(duration.multiply(speedFactor.doubleValue()));
                                         timeSeconds.set(time.toSeconds());
                                     }
                                 })
@@ -105,13 +117,16 @@ public class MyTimer {
         // gap between components is 20
         VBox vb = new VBox(20);
         HBox hb = new HBox(10);
+        HBox sb = new HBox();
+        sb.setAlignment(Pos.CENTER);
+        sb.getChildren().addAll(speedInfo,speedInfoX);
         hb.getChildren().addAll(start,reset,resetSlider);
         // center the components within VBox
         vb.setAlignment(Pos.CENTER);
         // Move the VBox down a bit
         vb.setLayoutY(30);
         // Add the button and timerLabel to the VBox
-        vb.getChildren().addAll(timerLabel,speedBox,hb);
+        vb.getChildren().addAll(timerLabel,sb,speedBox,hb);
         // Add the VBox to the root component
         root.getChildren().add(vb);
 

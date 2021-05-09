@@ -8,19 +8,19 @@ import javafx.beans.value.ChangeListener;
 import javafx.beans.value.ObservableValue;
 import javafx.event.ActionEvent;
 import javafx.event.EventHandler;
-import javafx.scene.control.Alert;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.TextField;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.GridPane;
 import javafx.scene.layout.HBox;
 import javafx.scene.layout.VBox;
+import javafx.scene.paint.Color;
 import javafx.util.Duration;
 
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 public class Cart {
     Integer X,Y,ID;
@@ -34,35 +34,29 @@ public class Cart {
     Label infoID, infoStatus, infoCords, mX,mY;
     Button moveCart;
     TextField moveParamX, moveParamY;
+    Integer movesDone;
 
     public Cart(GridPane map, VBox tools, Integer id, Integer x, Integer y, MyTimer timer) {
         content = new ArrayList<>();
         ID = id;
         X = x;
         Y = y;
+        movesDone = 0;
         speed = new SimpleDoubleProperty(1);
-        cartIcon = new Button("C");
+        cartIcon = new Button(ID.toString());
         cartIcon.setMaxSize(15, 30);
         cartIcon.setPrefSize(15,30);
-        cartIcon.setStyle("-fx-color:green;-fx-font-size:7;");
-        cartIcon.setOnAction(e -> {
-            if (cartIcon.getText() == "C"){
-                cartIcon.setText("");
-                cartIcon.setStyle("-fx-color:black");
-            }
-            else{
-                cartIcon.setText("C");
-                cartIcon.setStyle("-fx-color:green");
-            }
-        });
+        cartIcon.setStyle("-fx-color:green;-fx-font-size:8;");
         map.add(cartIcon, X, Y);
         status = "created";
 
         infoBox = new HBox();
-        infoID = new Label("Cart"+ID.toString());
+        infoID = new Label("Cart "+ID.toString());
         infoStatus = new Label(status);
-        infoCords = new Label(X.toString()+" | "+Y.toString());
+        infoStatus.setTextFill(Color.BLUE);
+        infoCords = new Label("X = "+X.toString() + "\tY = " + Y.toString());
         infoBox.getChildren().addAll(infoID,infoStatus,infoCords);
+        infoBox.setSpacing(10);
         moveBox = new HBox();
         mX = new Label("X:");
         mY = new Label("Y:");
@@ -72,7 +66,6 @@ public class Cart {
         moveCart.setOnAction(new EventHandler<ActionEvent>() {
             @Override
             public void handle(ActionEvent event) {
-
                 Integer moveX = X;
                 Integer moveY = Y;
                 try {
@@ -90,94 +83,122 @@ public class Cart {
                     moveParamY.setText("invalid");
                 }
                 //if (moveY < 0) moveParamY.setText("invalid");
-
-
-                if (Y != moveY && X != moveX) {
-
-                    // moving on both lines is forbidden
-                    System.out.println(Y+"!="+moveY+"&&"+X+"!="+moveX);
-                    return;
-                }
-
-                // cycles for timeline
-                Integer Moves = 0;
-                Boolean yDirection = false;
-                Integer move = 0;
-
-                if (moveX != X) {
-
-                    // move on line x
-                    if (X > moveX) {
-                        Moves = X - moveX;
-                        move = -1;
-                    } else {
-                        Moves = moveX - X;
-                        move = 1;
-                    }
-                    yDirection = false;
-                }
-                if (Y != moveY) {
-
-                    // move on line y
-                    if (Y > moveY) {
-                        Moves = Y - moveY;
-                        move = -1;
-                    } else {
-                        Moves = moveY - Y;
-                        move = 1;
-                    }
-                    yDirection = true;
-                }
-                Boolean finalYDirection = yDirection;
-                Integer finalMove = move;
-
-                EventHandler<ActionEvent> timelineActions = new EventHandler<ActionEvent>() {
-                    @Override
-                    public void handle(ActionEvent event) {
-                        status = "moving";
-                        if (finalYDirection) {
-                            Y = Y + finalMove;
-                        } else {
-                            X = X + finalMove;
-                        }
-                        map.getChildren().remove(cartIcon);
-                        map.add(cartIcon, X, Y);
-                        System.out.println("move cart, speed: "+speed.doubleValue());
-                    }
-                };
-
-                // base timeline
-                final Duration[] dSpeed = new Duration[1];
-                dSpeed[0] = Duration.seconds(1/speed.doubleValue());
-                KeyFrame k = new KeyFrame(dSpeed[0], timelineActions);
-                timeline = new Timeline(k);
-                timeline.setCycleCount(Moves);
-                timeline.play();
-                timeline.setOnFinished(e -> {
-                    status = "finshed moving";
-                });
-
-                // timeline dynamic interruptions
-                Integer finalMoves = Moves;
-                speed.bind(timer.speedFactor);
-                speed.addListener(new ChangeListener<Number>() {
-                    @Override
-                    public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
-                        timeline.stop();
-                        Integer c = finalMoves - timeline.getCycleCount();
-                        dSpeed[0] = Duration.seconds(1/speed.doubleValue());
-                        timeline.getKeyFrames().remove(0);
-                        KeyFrame newK = new KeyFrame(dSpeed[0],timelineActions);
-                        timeline.getKeyFrames().add(newK);
-                        timeline.setCycleCount(c);
-                        timeline.play();
-                    }
-                });
-
+                MoveCart(map,moveX,moveY,timer);
             }
         });
+        moveParamX.setMaxSize(50,10);
+        moveParamY.setMaxSize(50,10);
         moveBox.getChildren().addAll(mX,moveParamX,mY,moveParamY,moveCart);
-        tools.getChildren().addAll(infoBox,moveBox);
+        moveBox.setSpacing(5);
+        cartIcon.setOnAction(e -> {
+            if (cartIcon.getText().equals(ID.toString())){
+                cartIcon.setText("X");
+                cartIcon.setStyle("-fx-color:black;-fx-font-size:8;");
+                tools.getChildren().addAll(infoBox,moveBox);
+            }
+            else{
+                cartIcon.setText(ID.toString());
+                cartIcon.setStyle("-fx-color:green;-fx-font-size:8;");
+                tools.getChildren().removeAll(infoBox,moveBox);
+            }
+        });
+    }
+
+    public void MoveCart(GridPane map, Integer x, Integer y, MyTimer timer){
+
+        if (Y != y && X != x) {
+
+            // moving on both lines is forbidden
+            System.out.println(Y+"!="+y+"&&"+X+"!="+x);
+            return;
+        }
+
+        // cycles for timeline
+        Integer Moves = 0;
+        Boolean yDirection = false;
+        Integer move = 0;
+
+        if (x != X) {
+
+            // move on line x
+            if (X > x) {
+                Moves = X - x;
+                move = -1;
+            } else {
+                Moves = x - X;
+                move = 1;
+            }
+            yDirection = false;
+        }
+        if (Y != y) {
+
+            // move on line y
+            if (Y > y) {
+                Moves = Y - y;
+                move = -1;
+            } else {
+                Moves = y - Y;
+                move = 1;
+            }
+            yDirection = true;
+        }
+        Boolean finalYDirection = yDirection;
+        Integer finalMove = move;
+
+        EventHandler<ActionEvent> timelineActions = new EventHandler<ActionEvent>() {
+            @Override
+            public void handle(ActionEvent event) {
+                status = "moving";
+                if (finalYDirection) {
+                    Y = Y + finalMove;
+                } else {
+                    X = X + finalMove;
+                }
+                map.getChildren().remove(cartIcon);
+                map.add(cartIcon, X, Y);
+                movesDone++;
+                DisplayInfo();
+            }
+        };
+        speed.bind(timer.speedFactor);
+        final Duration[] dSpeed = new Duration[1];
+        dSpeed[0] = Duration.seconds(1/speed.doubleValue());
+        KeyFrame k = new KeyFrame(dSpeed[0], timelineActions);
+        timeline = new Timeline(k);
+        timeline.setCycleCount(Moves);
+        Integer finalMoves = Moves;
+        speed.addListener(new ChangeListener<Number>() {
+            @Override
+            public void changed(ObservableValue<? extends Number> observable, Number oldValue, Number newValue) {
+                timeline.stop();
+                Integer c = finalMoves - movesDone;
+                dSpeed[0] = Duration.seconds(1/speed.doubleValue());
+                timeline.getKeyFrames().remove(0);
+                KeyFrame newK = new KeyFrame(dSpeed[0],timelineActions);
+                timeline.getKeyFrames().add(newK);
+                timeline.setCycleCount(c);
+                timeline.play();
+            }
+        });
+        timeline.play();
+        timeline.setOnFinished(e -> {
+            status = "finished moving";
+            DisplayInfo();
+        });
+    }
+
+    public void DisplayInfo(){
+        infoStatus.textProperty().set(status);
+        infoCords.textProperty().set("X = "+X.toString() + "\tY = " + Y.toString());
+        if (status == "created"){
+            infoStatus.setTextFill(Color.BLUE);
+        }
+        else if (status == "finished moving"){
+            infoStatus.setTextFill(Color.GREEN);
+        }
+        else if (status == "moving"){
+            infoStatus.setTextFill(Color.RED);
+        }
     }
 
     public void loadCart(){

@@ -25,27 +25,17 @@ public class heatmap {
         HBox root = new HBox();
         root.setSpacing(20);
 
-        // buttons
-        HBox buttons = new HBox();
-        Button play = new Button("play");
-        Button pause = new Button("pause");
-        Button menu = new Button("menu");
-        menu.setOnAction(e -> main.setScene(mainScene));
-        buttons.getChildren().addAll(play, pause, menu);
-        buttons.setAlignment(Pos.CENTER);
-        buttons.setSpacing(20);
-
         // heatmap optional buttons
-        HBox buttons2 = new HBox();
+        HBox buttons = new HBox();
         Text heatmapOpt = new Text("Heatmap:     ");
         Button on = new Button("on");
         Button off = new Button("off");
-        buttons2.getChildren().addAll(heatmapOpt,on,off);
+        buttons.getChildren().addAll(heatmapOpt,on,off);
 
         // tools
         VBox tools = new VBox();
-        GridPane maxAmountInput = new GridPane();
-        tools.getChildren().addAll(buttons,buttons2,maxAmountInput);
+        VBox maxAmountInput = new VBox();
+        tools.getChildren().addAll(buttons,maxAmountInput);
         tools.setSpacing(15);
 
         // warehouse map
@@ -80,8 +70,6 @@ public class heatmap {
         boolean vSpacer = false;
 
         // draw shelves
-        AtomicInteger maxAmount = new AtomicInteger(100);
-        play.setOnAction(e -> maxAmount.set(50));
         for (Object shelf : jsonShelves){
             JSONObject jsonShelf = (JSONObject) shelf;
             Long shelfLongID = (Long) jsonShelf.get("shelf");
@@ -161,8 +149,8 @@ public class heatmap {
         // max stock in shelf
         Text maxAmountInputT = new Text("Maximum amount of stock in shelf:");
         TextField maxAmountInputTF = new TextField();
+        maxAmountInputTF.setMaxWidth(100);
         Button maxAmountInputB = new Button("set");
-        maxAmountInputB.setStyle("-fx-width: 100px;");
         maxAmountInputB.setOnAction(e ->{
             try {
                 er.set(false);
@@ -182,9 +170,9 @@ public class heatmap {
                 maxAmountInputTF.setText("Error - integer only!");
             }
         });
-        maxAmountInput.add(maxAmountInputT,0,0);
-        maxAmountInput.add(maxAmountInputTF,0,1);
-        maxAmountInput.add(maxAmountInputB,1,1);
+        HBox maxInH = new HBox();
+        maxInH.getChildren().addAll(maxAmountInputTF,maxAmountInputB);
+        maxAmountInput.getChildren().addAll(maxAmountInputT,maxInH);
         maxAmountInput.setMaxSize(100,100);
         maxAmountInput.setAlignment(Pos.TOP_LEFT);
         on.setStyle("-fx-color:white");
@@ -214,10 +202,11 @@ public class heatmap {
         // timer from custom class
         MyTimer timer = new MyTimer();
         tools.getChildren().add(timer.start());
+        tools.setPrefWidth(250);
 
         // carts
         Button addCart =  new Button("ADD CART");
-        AtomicInteger cartID = new AtomicInteger(1);
+        AtomicInteger cartID = new AtomicInteger(0);
         addCart.setOnAction(e ->{
             Cart cart = new Cart(map,tools, cartID.incrementAndGet(),1,1,timer);
         });
@@ -237,6 +226,7 @@ public class heatmap {
 
 
         // warehouse map zoom
+        VBox mapZoom =  new VBox(20);
         HBox Zoom = new HBox();
         Text ZoomT = new Text("Zoom: ");
         Slider slider = new Slider(0.5,2,1);
@@ -254,11 +244,16 @@ public class heatmap {
         zoomingPane.setPrefSize(mapMaxW+5,820);
         zoomingPane.setStyle("-fx-border-color: black;");
         Zoom.getChildren().addAll(ZoomT,slider,resetZoom);
-        tools.getChildren().add(Zoom);
-        tools.setPrefWidth(250);
+        Zoom.setAlignment(Pos.CENTER);
+        mapZoom.getChildren().addAll(zoomingPane,Zoom);
+
+        // button for switching stage back to menu
+        Button menu = new Button("menu");
+        menu.setOnAction(e -> main.setScene(mainScene));
+        menu.setAlignment(Pos.TOP_RIGHT);
 
         // add all elements to root
-        root.getChildren().addAll(tools,zoomingPane,vInfo);
+        root.getChildren().addAll(tools,mapZoom,vInfo,menu);
 
         // return scene to be displayed
         Scene scene = new Scene(root, 960, 960);
