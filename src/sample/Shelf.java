@@ -26,15 +26,6 @@ public class Shelf {
         getShelfInfo();
 
     }
-
-    public class GoodType{
-        String Good;
-        int Amount;
-        public GoodType(String type, int amount){
-            Good = type;
-            Amount = amount;
-        }
-    }
     int ID;
     int finalTotalAmount;
     String finalShelfInfo;
@@ -75,28 +66,21 @@ public class Shelf {
             totalAmount = totalAmount + shelfGood.Amount;
         }
         finalTotalAmount = totalAmount;
-        finalShelfInfo = shelfInfo+"Total: "+finalTotalAmount;
+        finalShelfInfo = shelfInfo+"\n\n\nTotal: "+finalTotalAmount;
     }
 
-    public Rectangle drawShelf(int ID, VBox r){
+    public Rectangle drawShelf(int ID, TextArea r){
         // rectangle + hover for showing goods
         shelfRect.setStroke(Color.BLACK);
         shelfRect.setFill(Color.TRANSPARENT);
-
-        VBox box =  new VBox();
         shelfRect.hoverProperty().addListener((ObservableValue<? extends Boolean> observable, Boolean oldValue, Boolean show) -> {
             if (show){
-                TextArea shelfInfoBox = new TextArea(finalShelfInfo);
-                shelfInfoBox.setPrefSize(250,400);
-                shelfInfoBox.setStyle("-fx-font-size: 10");
-                box.setAlignment(Pos.BOTTOM_LEFT);
-                box.getChildren().add(shelfInfoBox);
+                r.textProperty().set(finalShelfInfo);
             }
             else {
-                box.getChildren().clear();
+                r.textProperty().set("");
             }
         });
-        r.getChildren().add(box);
         return shelfRect;
     }
 }

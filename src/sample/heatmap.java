@@ -1,15 +1,12 @@
 package sample;
 
 import javafx.geometry.Pos;
-import javafx.scene.Group;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.image.ImageView;
 import javafx.scene.layout.*;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 import javafx.scene.text.Text;
-import javafx.scene.web.WebView;
 import javafx.stage.Stage;
 import org.json.simple.JSONArray;
 import org.json.simple.JSONObject;
@@ -24,12 +21,11 @@ import java.util.concurrent.atomic.AtomicInteger;
 public class heatmap {
     public static Scene init(Stage main, Scene mainScene) {
 
-        String cwd = System.getProperty("user.dir");
-        cwd = cwd.replace("\\","/");
-
+        // root pane
         HBox root = new HBox();
         root.setSpacing(20);
 
+        // buttons
         HBox buttons = new HBox();
         Button play = new Button("play");
         Button pause = new Button("pause");
@@ -39,22 +35,27 @@ public class heatmap {
         buttons.setAlignment(Pos.CENTER);
         buttons.setSpacing(20);
 
+        // heatmap optional buttons
         HBox buttons2 = new HBox();
         Text heatmapOpt = new Text("Heatmap:     ");
         Button on = new Button("on");
         Button off = new Button("off");
         buttons2.getChildren().addAll(heatmapOpt,on,off);
 
+        // tools
         VBox tools = new VBox();
         GridPane maxAmountInput = new GridPane();
         tools.getChildren().addAll(buttons,buttons2,maxAmountInput);
         tools.setSpacing(15);
 
+        // warehouse map
         GridPane map = new GridPane();
         map.setAlignment(Pos.CENTER_RIGHT);
 
-        VBox vInfo = new VBox();
+        TextArea vInfo = new TextArea();
+        vInfo.setMaxSize(250,800);
 
+        // parse json input
         JSONParser inputParser = new JSONParser();
         Object obj = new Object();
         try {
@@ -66,17 +67,19 @@ public class heatmap {
         JSONObject jsonObject = (JSONObject) obj;
         JSONArray jsonShelves = (JSONArray) jsonObject.get("shelves");
         JSONArray jsonRequests = (JSONArray) jsonObject.get("carts");
+
+        // shelf lists
         List<Integer> shelfIDs = new ArrayList<Integer>();
         List<Integer> shelfIDx = new ArrayList<Integer>();
         ArrayList<Shelf> shelves = new ArrayList<Shelf>();
         shelfIDs.add(0);
         shelfIDx.add(0);
 
+        // space betweem columns
         int nSpacers = 0;
-        Integer shelfStorageIndex = 0;
         boolean vSpacer = false;
 
-        // set capacity of shelf
+        // draw shelves
         AtomicInteger maxAmount = new AtomicInteger(100);
         play.setOnAction(e -> maxAmount.set(50));
         for (Object shelf : jsonShelves){
@@ -127,6 +130,27 @@ public class heatmap {
             nSpacers = cords.get(2);
         }
 
+        // space between columns
+        int z = 0;
+        for (int i = 0; i <= nSpacers; i++){
+            Region cSpacer = new Region();
+            Region ccSpacer = new Region();
+            cSpacer.setPrefSize(15,600);
+            ccSpacer.setPrefSize(15,600);
+            map.add(cSpacer,1+z,0,1,20);
+            map.add(ccSpacer,2+z,0,1,20);
+            z = z + 4;
+        }
+
+        // space between rows
+        Region rSpacer = new Region();
+        rSpacer.setPrefSize(180,30);
+        map.add(rSpacer,0,10,16,1);
+        int mapMaxW = map.getRowCount()*15;
+        map.setPrefSize(mapMaxW,810);
+
+
+        // max stock in shelf variables
         AtomicInteger in = new AtomicInteger();
         in.set(100);
         AtomicBoolean isOn = new AtomicBoolean();
@@ -134,6 +158,7 @@ public class heatmap {
         AtomicBoolean er = new AtomicBoolean();
         isOn.set(false);
 
+        // max stock in shelf
         Text maxAmountInputT = new Text("Maximum amount of stock in shelf:");
         TextField maxAmountInputTF = new TextField();
         Button maxAmountInputB = new Button("set");
@@ -162,7 +187,6 @@ public class heatmap {
         maxAmountInput.add(maxAmountInputB,1,1);
         maxAmountInput.setMaxSize(100,100);
         maxAmountInput.setAlignment(Pos.TOP_LEFT);
-
         on.setStyle("-fx-color:white");
         off.setStyle("-fx-color:red");
         on.setOnAction(e -> {
@@ -187,20 +211,19 @@ public class heatmap {
             }
         });
 
+        // timer from custom class
+        MyTimer timer = new MyTimer();
+        tools.getChildren().add(timer.start());
 
-        int z = 0;
-        for (int i = 0; i <= nSpacers; i++){
-            Region cSpacer = new Region();
-            cSpacer.setPrefSize(30,600);
-            map.add(cSpacer,1+z,0,2,20);
-            z = z + 4;
-        }
-        Region rSpacer = new Region();
-        rSpacer.setPrefSize(180,30);
-        map.add(rSpacer,0,10,16,1);
-        int mapMaxW = map.getRowCount()*15;
-        map.setPrefSize(mapMaxW,810);
+        // carts
+        Button addCart =  new Button("ADD CART");
+        AtomicInteger cartID = new AtomicInteger(1);
+        addCart.setOnAction(e ->{
+            Cart cart = new Cart(map,tools, cartID.incrementAndGet(),1,1,timer);
+        });
+        tools.getChildren().add(addCart);
 
+        // issue place
         StackPane dock = new StackPane();
         Rectangle dockR =  new Rectangle(120,30);
         Text dockT = new Text("VYDAJ");
@@ -212,6 +235,8 @@ public class heatmap {
         map.add(dockSpacer,0,22,16,2);
         map.add(dock,4,25,8,1);
 
+
+        // warehouse map zoom
         HBox Zoom = new HBox();
         Text ZoomT = new Text("Zoom: ");
         Slider slider = new Slider(0.5,2,1);
@@ -229,10 +254,13 @@ public class heatmap {
         zoomingPane.setPrefSize(mapMaxW+5,820);
         zoomingPane.setStyle("-fx-border-color: black;");
         Zoom.getChildren().addAll(ZoomT,slider,resetZoom);
-
         tools.getChildren().add(Zoom);
         tools.setPrefWidth(250);
+
+        // add all elements to root
         root.getChildren().addAll(tools,zoomingPane,vInfo);
+
+        // return scene to be displayed
         Scene scene = new Scene(root, 960, 960);
         return scene;
     }
