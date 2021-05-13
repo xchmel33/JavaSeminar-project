@@ -227,7 +227,7 @@ public class Cart {
     }
 
     public void unloadCart(){
-
+        content.clear();
     }
 
     public void getCartContent(){

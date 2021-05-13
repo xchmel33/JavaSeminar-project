@@ -214,7 +214,6 @@ public class heatmap {
         tools.setPrefWidth(250);
 
 
-
         // carts
         JSONArray jsonCarts = (JSONArray) jsonObject.get("carts");
         AtomicInteger cartID = new AtomicInteger(0);
@@ -262,22 +261,32 @@ public class heatmap {
         stockAmount.setMaxWidth(30);
         Button prijem = new Button("PRIJEM");
         Button vydaj = new Button("VYDAJ");
+        Button processReq = new Button("PROCESS ALL");
         reqBox1.getChildren().addAll(reqCartL,reqCart,reqShelfL,reqShelf);
         reqBox2.getChildren().addAll(stockTypeL,stockType,stockAmountL,stockAmount);
-        reqBox3.getChildren().addAll(prijem,vydaj);
+        reqBox3.getChildren().addAll(prijem,vydaj,processReq);
         reqBox.getChildren().addAll(reqL,reqBox1,reqBox2,reqBox3);
         tools.getChildren().addAll(reqBox,addCart);
 
-
         // request
         AtomicInteger reqID = new AtomicInteger();
+        List<Request> requests = new ArrayList<>();
         prijem.setOnAction(e ->{
             reqID.getAndIncrement();
-            reqInfo.appendText("REQUEST "+reqID.get()+":\n PRIJEM "+"CART "+reqCart.getText()+" SHELF "+reqShelf.getText()+" STOCK "+stockType.getText()+" "+stockType.getText()+"\n");
+            reqInfo.appendText("REQUEST "+reqID.get()+":\n PRIJEM "+"CART "+reqCart.getText()+" SHELF "+reqShelf.getText()+" STOCK "+stockType.getText()+" "+stockAmount.getText()+"\n");
+            requests.add(new Request("prijem",stockType.getText(),Integer.parseInt(stockAmount.getText()),Integer.parseInt(reqShelf.getText()),Integer.parseInt(reqCart.getText())));
         });
         vydaj.setOnAction(e ->{
             reqID.getAndIncrement();
-            reqInfo.appendText("REQUEST "+reqID.get()+":\n VYDAJ "+"CART "+reqCart.getText()+" SHELF "+reqShelf.getText()+" STOCK "+stockType.getText()+" "+stockType.getText()+"\n");
+            reqInfo.appendText("REQUEST "+reqID.get()+":\n VYDAJ "+"CART "+reqCart.getText()+" SHELF "+reqShelf.getText()+" STOCK "+stockType.getText()+" "+stockAmount.getText()+"\n");
+            requests.add(new Request("vydaj",stockType.getText(),Integer.parseInt(stockAmount.getText()),Integer.parseInt(reqShelf.getText()),Integer.parseInt(reqCart.getText())));
+        });
+
+        processReq.setOnAction(e ->{
+            System.out.println("processing requests");
+            for (Request req : requests){
+                req.processRequest(carts.get(req.cartID),shelves.get(req.shelfID),map,timer);
+            }
         });
 
         // issue place & parking

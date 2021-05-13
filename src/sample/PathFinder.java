@@ -48,8 +48,8 @@ public class PathFinder {
         // Bidirectional Search
         OPEN1.add(beginPoint);
         OPEN2.add(endPoint);
-        System.out.println("begin point: "+beginPoint.cords.pY+" "+beginPoint.cords.pY);
-        System.out.println("end point: "+endPoint.cords.pX + " "+endPoint.cords.pY);
+        //System.out.println("begin point: "+beginPoint.cords.pY+" "+beginPoint.cords.pY);
+        //System.out.println("end point: "+endPoint.cords.pX + " "+endPoint.cords.pY);
         while (true){
             if (OPEN1.isEmpty()){
                 return null;
@@ -59,9 +59,9 @@ public class PathFinder {
 
             // expanding from begin point
             List<Point> followers = expandAll(chosenPoint,map);
-            System.out.println("chosenPoint: "+chosenPoint.cords.pX+" "+chosenPoint.cords.pY);
+            //System.out.println("chosenPoint: "+chosenPoint.cords.pX+" "+chosenPoint.cords.pY);
             for (Point follower : followers){
-                System.out.println("follower: "+follower.cords.pX + " " + follower.cords.pY);
+                //System.out.println("follower: "+follower.cords.pX + " " + follower.cords.pY);
                 int i = searchFront(OPEN2,follower);
                 if (i != -1){
                     Point x = OPEN2.get(i);
@@ -82,7 +82,7 @@ public class PathFinder {
             CLOSED2.add(chosenPoint);
 
             //expanding from closed point
-            System.out.println("chosenPoint: "+chosenPoint.cords.pX+" "+chosenPoint.cords.pY);
+            //System.out.println("chosenPoint: "+chosenPoint.cords.pX+" "+chosenPoint.cords.pY);
             for (Point follower : expandAll(chosenPoint,map)){
                 int i = searchFront(OPEN1,follower);
                 if (i != -1){
@@ -93,7 +93,7 @@ public class PathFinder {
                     finalPath.add(endPoint.cords);
                     return finalPath;
                 }
-                System.out.println("follower: "+follower.cords.pX + " " + follower.cords.pY);
+                //System.out.println("follower: "+follower.cords.pX + " " + follower.cords.pY);
                 if (searchFront(CLOSED2,follower) == -1){
                     OPEN2.add(follower);
                 }

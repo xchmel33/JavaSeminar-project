@@ -39,6 +39,8 @@ public class Shelf {
         getShelfInfo();
     }
 
+
+
     public void shelfHeat(int maxAmount){
         float oc = (float) finalTotalAmount/maxAmount;
         if (oc > 1){
