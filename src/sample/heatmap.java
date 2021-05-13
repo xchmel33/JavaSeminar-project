@@ -36,14 +36,24 @@ public class heatmap {
         VBox tools = new VBox();
         VBox maxAmountInput = new VBox();
         tools.getChildren().addAll(buttons,maxAmountInput);
-        tools.setSpacing(15);
+        tools.setSpacing(20);
 
         // warehouse map
         GridPane map = new GridPane();
         map.setAlignment(Pos.CENTER_RIGHT);
 
+        // shelf and cart information
+        VBox info = new VBox(20);
         TextArea vInfo = new TextArea();
-        vInfo.setMaxSize(250,800);
+        vInfo.setMaxSize(250,300);
+        vInfo.setPrefSize(250,300);
+        TextArea cInfo = new TextArea();
+        cInfo.setMaxSize(250,300);
+        cInfo.setPrefSize(250,300);
+        TextArea reqInfo = new TextArea();
+        reqInfo.setMaxSize(250,200);
+        reqInfo.setPrefSize(250,200);
+        info.getChildren().addAll(vInfo,cInfo,reqInfo);
 
         // parse json input
         JSONParser inputParser = new JSONParser();
@@ -56,7 +66,6 @@ public class heatmap {
         }
         JSONObject jsonObject = (JSONObject) obj;
         JSONArray jsonShelves = (JSONArray) jsonObject.get("shelves");
-        JSONArray jsonRequests = (JSONArray) jsonObject.get("carts");
 
         // shelf lists
         List<Integer> shelfIDs = new ArrayList<Integer>();
@@ -204,26 +213,91 @@ public class heatmap {
         tools.getChildren().add(timer.start());
         tools.setPrefWidth(250);
 
-        // carts
-        Button addCart =  new Button("ADD CART");
-        AtomicInteger cartID = new AtomicInteger(0);
-        addCart.setOnAction(e ->{
-            Cart cart = new Cart(map,tools, cartID.incrementAndGet(),1,1,timer);
-        });
-        tools.getChildren().add(addCart);
 
-        // issue place
+
+        // carts
+        JSONArray jsonCarts = (JSONArray) jsonObject.get("carts");
+        AtomicInteger cartID = new AtomicInteger(0);
+        List<Cart> carts = new ArrayList<>();
+        for (Object cart: jsonCarts){
+            JSONObject jsonCart = (JSONObject) cart;
+            Long jsonCartID = (Long) jsonCart.get("cart");
+            JSONArray jsonCartContent = (JSONArray) jsonCart.get("order");
+            cartID.set(jsonCartID.intValue());
+            Cart xCart = new Cart(map, tools, cartID.get(), cartID.get()-1, 24, timer,cInfo);
+            for (Object Content: jsonCartContent){
+                JSONObject jsonContent = (JSONObject) Content;
+                String contentType = (String) jsonContent.get("type");
+                Long jsonContentAmount = (Long) jsonContent.get("amount");
+                int contentAmount = jsonContentAmount.intValue();
+                xCart.loadCart(contentType,contentAmount);
+            }
+            carts.add(xCart);
+        }
+
+        // carts adding
+        Button addCart =  new Button("ADD CART");
+        addCart.setOnAction(e ->{
+            Cart cart = new Cart(map,tools, cartID.incrementAndGet(),cartID.get()-1,24,timer,cInfo);
+            carts.add(cart);
+        });
+
+        // requests box
+        VBox reqBox = new VBox(10);
+        HBox reqBox1 = new HBox(5);
+        HBox reqBox2 = new HBox(5);
+        HBox reqBox3 = new HBox(5);
+        Label reqL = new Label("Requests");
+        Label reqCartL = new Label("Cart ID:");
+        Label reqShelfL = new Label("Shelf ID:");
+        Label stockTypeL = new Label("Stock type:");
+        Label stockAmountL = new Label("Stock Amount:");
+        TextField reqCart = new TextField();
+        TextField reqShelf = new TextField();
+        TextField stockType = new TextField();
+        TextField stockAmount = new TextField();
+        reqCart.setMaxWidth(30);
+        reqShelf.setMaxWidth(30);
+        stockType.setMaxWidth(50);
+        stockAmount.setMaxWidth(30);
+        Button prijem = new Button("PRIJEM");
+        Button vydaj = new Button("VYDAJ");
+        reqBox1.getChildren().addAll(reqCartL,reqCart,reqShelfL,reqShelf);
+        reqBox2.getChildren().addAll(stockTypeL,stockType,stockAmountL,stockAmount);
+        reqBox3.getChildren().addAll(prijem,vydaj);
+        reqBox.getChildren().addAll(reqL,reqBox1,reqBox2,reqBox3);
+        tools.getChildren().addAll(reqBox,addCart);
+
+
+        // request
+        AtomicInteger reqID = new AtomicInteger();
+        prijem.setOnAction(e ->{
+            reqID.getAndIncrement();
+            reqInfo.appendText("REQUEST "+reqID.get()+":\n PRIJEM "+"CART "+reqCart.getText()+" SHELF "+reqShelf.getText()+" STOCK "+stockType.getText()+" "+stockType.getText()+"\n");
+        });
+        vydaj.setOnAction(e ->{
+            reqID.getAndIncrement();
+            reqInfo.appendText("REQUEST "+reqID.get()+":\n VYDAJ "+"CART "+reqCart.getText()+" SHELF "+reqShelf.getText()+" STOCK "+stockType.getText()+" "+stockType.getText()+"\n");
+        });
+
+        // issue place & parking
         StackPane dock = new StackPane();
-        Rectangle dockR =  new Rectangle(120,30);
+        StackPane park = new StackPane();
+        Rectangle dockR = new Rectangle(120,30);
+        Rectangle parkR = new Rectangle(120,30);
         Text dockT = new Text("VYDAJ");
+        Text parking = new Text("PARKING");
         dockR.setStroke(Color.BLACK);
         dockR.setFill(Color.TRANSPARENT);
+        parkR.setStroke(Color.BLACK);
+        parkR.setFill(Color.TRANSPARENT);
         dock.getChildren().addAll(dockT,dockR);
+        park.getChildren().addAll(parking,parkR);
         Region dockSpacer = new Region();
         dockSpacer.setPrefSize(180,60);
         map.add(dockSpacer,0,22,16,2);
-        map.add(dock,4,25,8,1);
-
+        map.add(dock,8,25,8,1);
+        map.add(park,0,25,8,1);
 
         // warehouse map zoom
         VBox mapZoom =  new VBox(20);
@@ -253,7 +327,7 @@ public class heatmap {
         menu.setAlignment(Pos.TOP_RIGHT);
 
         // add all elements to root
-        root.getChildren().addAll(tools,mapZoom,vInfo,menu);
+        root.getChildren().addAll(tools,mapZoom,info,menu);
 
         // return scene to be displayed
         Scene scene = new Scene(root, 960, 960);
